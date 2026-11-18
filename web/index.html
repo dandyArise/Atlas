@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Atlas réseau</title><link rel="stylesheet" href="/vendor/leaflet.css"><link rel="stylesheet" href="/style.css"><script src="/vendor/leaflet.js" defer></script><script src="/app.js" defer></script></head>
+<body>
+<header class="topbar">
+  <div class="brand"><span data-icon="globe" class="brand-mark"></span><h1>Atlas réseau</h1></div><span class="subtitle">Moniteur réseau <span>(observation)</span></span>
+  <nav aria-label="Vue"><button id="live" aria-pressed="true" class="selected"><span class="live-dot"></span>En direct</button><button id="history" aria-pressed="false"><span data-icon="clock"></span>Historique</button><button id="lists-button" aria-expanded="false"><span data-icon="layers"></span>Listes<span data-icon="chevron-down"></span></button></nav>
+  <button id="stop" class="quiet" title="Arrêter la collecte et conserver l’historique"><span data-icon="power"></span><span>Arrêter Atlas</span></button>
+</header>
+<main class="workspace">
+  <aside class="sidebar">
+    <div class="side-tools"><label class="search-field"><span data-icon="search"></span><span class="sr-only">Rechercher</span><input id="search" type="search" placeholder="Rechercher une application, IP, domaine…" autocomplete="off"></label>
+      <div class="group-heading">Grouper par :</div><select id="grouping" class="sr-only" aria-label="Grouper par"><option value="app">Application</option><option value="country">Pays</option><option value="domain">Domaine possible (DNS)</option><option value="server">Serveur (IP)</option></select>
+      <div class="segments" role="group" aria-label="Regroupement"><button data-group="app" aria-pressed="true">Application</button><button data-group="country" aria-pressed="false">Pays</button><button data-group="domain" aria-pressed="false" title="Associations possibles du cache DNS">Domaine</button><button data-group="server" aria-pressed="false">Serveur</button></div>
+    </div>
+    <div id="tree" aria-label="Groupes de connexions"></div><div class="side-bottom"><span id="page"></span><span class="page-hint">Page courante</span><div><button id="previous" aria-label="Page précédente"><span data-icon="chevron-left"></span></button><button id="next" aria-label="Page suivante"><span data-icon="chevron-right"></span></button></div></div>
+  </aside>
+  <section class="centre">
+    <div class="filters"><label>Protocole :<select id="protocol"><option value="">Tous</option><option value="TCP">TCP</option><option value="UDP">UDP</option><option value="QUIC">QUIC possible</option></select></label><label>Pays :<select id="country"><option value="">Tous</option></select></label><label>Alertes :<select id="alerts"><option value="">Toutes</option><option value="true">Signalées</option></select></label><label id="date-label" hidden>Jour :<input id="date" type="date"></label></div>
+    <div class="filter-meta"><span id="capture-time"></span><button id="clear" class="text-button">Effacer les filtres</button></div>
+    <div id="error" role="alert" hidden></div>
+    <div class="map-shell"><div id="map" aria-label="Carte des destinations"></div>
+      <div class="map-actions"><button id="fit-map" title="Cadrer les destinations"><span data-icon="expand"></span><span>Destinations</span></button><button id="origin" title="Choisir manuellement le point de départ des lignes"></button><button id="clear-origin" hidden title="Retirer le point de départ"><span data-icon="close"></span></button><label title="Charger les tuiles OpenStreetMap"><input id="detailed-map" type="checkbox"> Détails OSM</label></div>
+      <div id="map-message" role="status"></div><div class="map-caption"><span>Positions IP approximatives</span><span id="coverage"></span></div>
+    </div>
+    <section class="details"><div class="detail-heading"><h2><span data-icon="info"></span><span id="detail-title">Détails de la connexion</span></h2><button id="more-details" class="icon-button" aria-label="Afficher tous les détails" aria-expanded="false"><span data-icon="chevron-down"></span></button></div><p id="detail-placeholder">Sélectionnez une connexion dans la liste ou sur la carte.</p><dl id="detail-body"></dl><dl id="detail-extra" hidden></dl><div id="detail-alerts"></div></section>
+  </section>
+  <aside class="summary"><h2><span data-icon="chart"></span>Synthèse</h2><dl class="metrics"><dt><span data-icon="connections"></span>Connexions</dt><dd id="connections">—</dd><dt><span data-icon="app"></span>Applications</dt><dd id="apps">—</dd><dt><span data-icon="server"></span>Serveurs (IP)</dt><dd id="destinations">—</dd><dt><span data-icon="alert"></span>Alertes</dt><dd id="alert-count">—</dd></dl>
+    <section class="summary-box"><h3><span data-icon="calendar"></span>Dernière capture</h3><p id="status" role="status">Connexion au collecteur…</p></section><section class="udp-box"><span data-icon="radio"></span><strong>UDP</strong><span id="udp-status">Vérification…</span></section>
+    <section class="notice warning"><h3><span data-icon="alert"></span>Alerte de réputation</h3><p>Une IP signalée appartient à une liste active. Ce n’est pas une preuve d’infection.</p></section><section class="notice"><h3><span data-icon="info"></span>Domaine possible</h3><p>Le cache DNS suggère des domaines. Sur une IP partagée, l’attribution reste incertaine.</p></section>
+    <details class="capture-help"><summary>À propos de la capture</summary><p>UDP : activité récente pendant 30 s. QUIC possible : UDP/443, sans confirmation protocolaire.</p><p id="dns-status"></p></details>
+  </aside>
+</main>
+<footer class="bottom"><div><span data-icon="pin"></span><strong id="geo-title">Géolocalisation désactivée</strong><button id="geo">Activer</button><span>IP publiques distantes envoyées à ipwho.is · cache local</span></div><span><span data-icon="shield"></span>Observation uniquement · historique 30 jours</span></footer>
+<dialog id="lists-dialog"><header><h2><span data-icon="layers"></span>Listes de réputation</h2><button id="close-lists" class="icon-button" aria-label="Fermer les listes"><span data-icon="close"></span></button></header><p class="dialog-intro">Alertes locales · aucune connexion bloquée</p><div id="list-items"></div><button id="refresh-lists"><span data-icon="refresh"></span>Mettre à jour les listes</button><p id="lists-status" role="status"></p><details class="list-help"><summary>Sources et fonctionnement</summary><p>Actualisation quotidienne ; au moins une heure entre deux téléchargements par source et par exécution. Les anciennes alertes gardent leur résultat initial.</p><p>Spamhaus : © The Spamhaus Project. StevenBlack : sources et licences conservées avec les listes. Les destinations ne sont pas envoyées aux fournisseurs de listes.</p></details></dialog>
+</body></html>
