@@ -24,8 +24,8 @@ def get(path='/api/connections?mode=history'):
     with urllib.request.urlopen(base + path, timeout=3) as r:
         return json.load(r)
 
-def eventually(check, message):
-    for _ in range(24):
+def eventually(check, message, attempts=24):
+    for _ in range(attempts):
         try:
             result = check()
             if result:
@@ -81,7 +81,7 @@ with tempfile.TemporaryDirectory(prefix='atlas-verification-') as directory:
         assert get('/api/connections?q=__no_such_application__')['total'] == 0
         assert status('/world.json') == 200 and status('/app.js') == 200
         assert status('/country-names.json') == 200
-        icons = eventually(lambda: get('/api/icons'), 'native application icons unavailable')
+        icons = eventually(lambda: get('/api/icons'), 'native application icons unavailable', attempts=80)
         import base64
         for value in icons.values():
             assert value.startswith('data:image/png;base64,')

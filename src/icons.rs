@@ -59,7 +59,9 @@ fn extract(paths: &[String]) -> Result<Vec<Icon>, String> {
     let status = loop {
         match child.try_wait() {
             Ok(Some(status)) => break Ok(status),
-            Ok(None) if start.elapsed() < Duration::from_secs(8) => {
+            // A cold Windows PowerShell/.NET startup can exceed eight seconds
+            // on hosted runners and slower PCs. This worker never blocks the API.
+            Ok(None) if start.elapsed() < Duration::from_secs(30) => {
                 thread::sleep(Duration::from_millis(100))
             }
             _ => {
